@@ -76,8 +76,6 @@ public class ReachExtender extends JavaPlugin implements Listener {
 
                 // Эффекты
                 player.sendMessage(ChatColor.LIGHT_PURPLE + "⚡ Дыхание дракона слилось с молнией!");
-                player.getWorld().spawnParticle(org.bukkit.Particle.DRAGON_BREATH, player.getLocation(), 50, 0.5, 0.5, 0.5, 0.1);
-                player.getWorld().spawnParticle(org.bukkit.Particle.ELECTRIC_SPARK, player.getLocation().add(0, 1, 0), 20);
             }
         }
     }

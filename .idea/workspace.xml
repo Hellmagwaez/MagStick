@@ -5,6 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a8ea36be-7423-4233-a05e-11459d154058" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com.hellmagwaez.reachextender/ReachExtender.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com.hellmagwaez.reachextender/ReachExtender.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/ReachExtender-1.0.jar" beforeDir="false" afterPath="$PROJECT_DIR$/target/ReachExtender-1.0.jar" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/com/hellmagwaez/reachextender/ReachExtender.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/hellmagwaez/reachextender/ReachExtender.class" afterDir="false" />
