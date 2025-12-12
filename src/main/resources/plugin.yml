@@ -1,0 +1,17 @@
+name: ReachExtender
+version: 1.0
+main: com.hellmagwaez.reachextender.ReachExtender
+api-version: 1.21
+author: HellMagWaez
+permissions:
+  reachextender.use:
+    description: Позволяет использовать палку
+    default: true
+  reachextender.give: # Новое право
+    description: Позволяет выдать палку
+    default: op
+commands: # Новая секция
+  getreachstick:
+    description: Выдает палку удлинения руки
+    usage: /getreachstick
+    permission: reachextender.give
