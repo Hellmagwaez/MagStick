@@ -10,6 +10,9 @@ import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.inventory.EquipmentSlotGroup;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -18,7 +21,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ReachExtender extends JavaPlugin {
+// 1. Добавили "implements Listener"
+public class ReachExtender extends JavaPlugin implements Listener {
 
     private NamespacedKey key;
     private double bonusReach;
@@ -31,8 +35,12 @@ public class ReachExtender extends JavaPlugin {
         saveDefaultConfig();
         loadConfigValues();
         key = new NamespacedKey(this, "reach_modifier");
+
+        // 2. Регистрируем события (чтобы ритуал работал)
+        getServer().getPluginManager().registerEvents(this, this);
+
         Bukkit.getScheduler().runTaskTimer(this, this::checkPlayers, 20L, getConfig().getLong("check-interval"));
-        getLogger().info("ReachExtender от HellMagWaez включен!");
+        getLogger().info("ReachExtender включен!");
     }
 
     @Override
@@ -42,20 +50,50 @@ public class ReachExtender extends JavaPlugin {
         }
     }
 
+    // --- ЛОГИКА РИТУАЛА ---
+    @EventHandler
+    public void onLightningDamage(EntityDamageEvent event) {
+        if (event.getEntity() instanceof Player player && event.getCause() == EntityDamageEvent.DamageCause.LIGHTNING) {
+
+            ItemStack mainHand = player.getInventory().getItemInMainHand();
+            ItemStack offHand = player.getInventory().getItemInOffHand();
+
+            // 1. Проверяем палку в правой руке
+            boolean isStick = mainHand.getType() == Material.STICK && !isSpecialItem(mainHand);
+
+            // 2. Проверяем Дыхание дракона в левой руке
+            boolean isDragonBreath = offHand.getType() == Material.DRAGON_BREATH;
+
+            if (isStick && isDragonBreath) {
+
+                // Забираем предметы
+                mainHand.setAmount(mainHand.getAmount() - 1);
+                offHand.setAmount(offHand.getAmount() - 1);
+
+                // Выдаем магическую палку
+                player.getInventory().addItem(createReachStick()).forEach((index, item) ->
+                        player.getWorld().dropItem(player.getLocation(), item));
+
+                // Эффекты
+                player.sendMessage(ChatColor.LIGHT_PURPLE + "⚡ Дыхание дракона слилось с молнией!");
+                player.getWorld().spawnParticle(org.bukkit.Particle.DRAGON_BREATH, player.getLocation(), 50, 0.5, 0.5, 0.5, 0.1);
+                player.getWorld().spawnParticle(org.bukkit.Particle.ELECTRIC_SPARK, player.getLocation().add(0, 1, 0), 20);
+            }
+        }
+    }
+    // -----------------------
+
     private void loadConfigValues() {
         bonusReach = getConfig().getDouble("bonus-reach", 3.0);
         String matName = getConfig().getString("item.material", "STICK");
         targetMaterial = Material.getMaterial(matName);
         if (targetMaterial == null) targetMaterial = Material.STICK;
         targetName = ChatColor.translateAlternateColorCodes('&', getConfig().getString("item.name", ""));
-
-        // Получаем и переводим Lore
         targetLore = getConfig().getStringList("item.lore").stream()
                 .map(line -> ChatColor.translateAlternateColorCodes('&', line))
                 .collect(Collectors.toList());
     }
 
-    // Метод для создания предмета
     private ItemStack createReachStick() {
         ItemStack item = new ItemStack(targetMaterial);
         ItemMeta meta = item.getItemMeta();
@@ -70,26 +108,15 @@ public class ReachExtender extends JavaPlugin {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (command.getName().equalsIgnoreCase("getreachstick")) {
-            if (!(sender instanceof Player)) {
-                sender.sendMessage(ChatColor.RED + "Эту команду может использовать только игрок.");
-                return true;
-            }
-
+            if (!(sender instanceof Player)) return true;
             Player player = (Player) sender;
-            if (!player.hasPermission("reachextender.give")) {
-                player.sendMessage(ChatColor.RED + "У вас нет прав для использования этой команды.");
-                return true;
-            }
-
-            ItemStack reachStick = createReachStick();
-            player.getInventory().addItem(reachStick);
-            player.sendMessage(ChatColor.GREEN + "Вам выдана " + targetName + ChatColor.GREEN + "!");
+            if (!player.hasPermission("reachextender.give")) return true;
+            player.getInventory().addItem(createReachStick());
             return true;
         }
         return false;
     }
 
-    // Остальные методы (applyReach, removeReach и т.д.) без изменений...
     private void checkPlayers() {
         for (Player player : Bukkit.getOnlinePlayers()) {
             ItemStack offHandItem = player.getInventory().getItemInOffHand();
@@ -111,7 +138,6 @@ public class ReachExtender extends JavaPlugin {
     private void applyReach(Player player) {
         AttributeInstance attr = player.getAttribute(Attribute.PLAYER_BLOCK_INTERACTION_RANGE);
         if (attr == null) return;
-
         boolean hasModifier = false;
         for (AttributeModifier modifier : attr.getModifiers()) {
             if (modifier.getKey().equals(key)) {
@@ -119,13 +145,9 @@ public class ReachExtender extends JavaPlugin {
                 break;
             }
         }
-
         if (!hasModifier) {
             AttributeModifier modifier = new AttributeModifier(
-                    key,
-                    bonusReach,
-                    AttributeModifier.Operation.ADD_NUMBER,
-                    EquipmentSlotGroup.OFFHAND
+                    key, bonusReach, AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.OFFHAND
             );
             attr.addModifier(modifier);
         }
@@ -134,7 +156,6 @@ public class ReachExtender extends JavaPlugin {
     private void removeReach(Player player) {
         AttributeInstance attr = player.getAttribute(Attribute.PLAYER_BLOCK_INTERACTION_RANGE);
         if (attr == null) return;
-
         for (AttributeModifier modifier : attr.getModifiers()) {
             if (modifier.getKey().equals(key)) {
                 attr.removeModifier(modifier);
