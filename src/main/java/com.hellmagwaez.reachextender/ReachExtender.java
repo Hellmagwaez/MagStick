@@ -1,6 +1,8 @@
 package com.hellmagwaez.reachextender;
 
 import org.bukkit.Bukkit;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -98,6 +100,15 @@ public class ReachExtender extends JavaPlugin implements Listener {
         if (meta != null) {
             meta.setDisplayName(targetName);
             meta.setLore(targetLore);
+
+            // --- ДОБАВЛЕНО ---
+            // 1. Добавляем "фейковое" зачарование (Прочность 1), true позволяет наложить его даже на палку
+            meta.addEnchant(org.bukkit.enchantments.Enchantment.UNBREAKING, 1, true);
+
+            // 2. Скрываем отображение зачарований в лоре
+            meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
+            // -----------------
+
             item.setItemMeta(meta);
         }
         return item;
